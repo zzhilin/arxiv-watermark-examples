@@ -1,0 +1,995 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="bootstrap.min.css" type="text/css">
+    <link rel="stylesheet" href="ar5iv_0.7.4.min.css" type="text/css">
+    <link rel="stylesheet" href="styles.css" type="text/css">
+    <script src="bootstrap.bundle.min.js"></script>
+    <script src="html2canvas.min.js"></script>
+    <script src="addons.js"></script>
+    <script src="feedbackOverlay.js"></script>
+    <link rel="stylesheet" href="rwr5zpx.css"><link rel="icon" type="image/png" href="https://static.arxiv.org/static/browse/0.3.4/images/icons/favicon-16x16.png" sizes="16x16"><link rel="icon" type="image/png" href="https://static.arxiv.org/static/browse/0.3.4/images/icons/favicon-32x32.png" sizes="32x32">
+    <title>Enhanced arXiv Page</title>
+    <style>
+      html,
+      body {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
+      }
+      body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        overflow-y: auto; 
+      }
+      .content-section {
+        padding: 15px;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      img {
+        max-width: 100%;
+        height: auto;
+        display: block;
+        cursor: pointer;
+      }
+      .zoomed {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.8);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+        display: none;
+      }
+      .zoomed img {
+        max-width: 90%;
+        max-height: 90%;
+      }
+      #target-section {
+        position: relative;
+      }
+      #watermark-tr {
+        text-align: center;
+        opacity: 0.5;
+        z-index: 9999;
+        color: black;
+        font-size: 24px;
+        user-select: none;
+        padding: 5px;
+        position: relative;
+        width: 100%;
+        
+      }
+      .equation-container {
+        overflow-x: auto;
+        overflow-y: hidden;
+        width: 100%;
+        white-space: nowrap;
+      }
+      .ltx-page-content {
+        z-index: 1000;
+        position:relative;
+      }
+      @media only screen and (max-width: 414px) and (max-height: 896px),
+        (max-width: 896px) and (max-height: 414px) {
+        body {
+          overflow: hidden;
+          max-height: 100vh;
+        }
+
+        .content-section {
+          padding: 5px;
+        }
+
+        #watermark-tr {
+          font-size: 8vw; /* Adjust font size for smaller screens */
+          opacity: 0.7;   /* Increase opacity for better visibility on smaller screens */
+          padding: 3px;   /* Reduce padding for smaller screens */
+        }
+        .equation-container {
+          font-size: 12px; 
+        }
+      }
+      @media only screen and (max-width: 720px) {
+        .ltx_TOC {
+            display: none; /* Hide TOC on small screens */
+        }
+        .ltx_page_main {
+            width: 100%; /* Make abstract full width */
+            float: none; /* Disable floating */
+        }
+      }
+
+    @media only screen and (min-width: 721px) {
+        .ltx_TOC {
+            float: left;
+            width: 50%; /* Adjust width as per requirement */
+        }
+        .ltx_page_main {
+            float: left;
+            width: 100%; /* Adjust width as per requirement */
+        }
+    }
+
+    </style>
+    <!-- Include MathJax for rendering math equations -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script
+      id="MathJax-script"
+      async
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+    ></script>
+  </head>
+
+  <body>
+    <div class="content-section vsc-initializer">
+      <header class="navbar bg-body-tertiary mob_header">
+    <div class="container-fluid">
+
+        <!--toc button-->
+        <div class="subcontainer-fluid">
+          <button class="navbar-toggler ar5iv-footer-button" type="button" data-bs-theme="dark" data-bs-toggle="collapse" aria-expanded="false" data-bs-target=".ltx_page_main &gt;.ltx_TOC.mobile" aria-controls="navbarSupportedContent" aria-label="Toggle navigation" style="border:none; margin-right: 0em;">
+            <span class="navbar-toggler-icon" style="width:1em;height:1em;margin-top: 0.1em;"></span>
+          </button>          
+          <!--back to abstract-->
+          <!-- <a class="nav-link ar5iv-footer-button hover-effect" style="color: white; display:inline-flex; flex-direction: column; align-items:center; text-align:center" href="#"> -->
+            <a class="nav-link ar5iv-footer-button hover-effect" style="color: white; margin-right:0em;" href="https://arxiv.org/abs/2308.05027v1"> 
+            <svg xmlns="http://www.w3.org/2000/svg" height="1.5em" viewBox="0 0 512 512" style="background-color:transparent; z-index:2">
+                <style>svg{fill:rgb(255, 255, 255)}</style>
+                <path d="M502.6 278.6c12.5-12.5 12.5-32.8 0-45.3l-128-128c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L402.7 224 192 224c-17.7 0-32 14.3-32 32s14.3 32 32 32l210.7 0-73.4 73.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0l128-128zM160 96c17.7 0 32-14.3 32-32s-14.3-32-32-32L96 32C43 32 0 75 0 128L0 384c0 53 43 96 96 96l64 0c17.7 0 32-14.3 32-32s-14.3-32-32-32l-64 0c-17.7 0-32-14.3-32-32l0-256c0-17.7 14.3-32 32-32l64 0z"></path>
+            </svg>
+            <!-- <span style="font-size: 0.75em;">Abstract</span> -->
+            </a>
+          <!--dark mode-->
+          <a class="nav-link ar5iv-toggle-color-scheme" href="javascript:toggleColorScheme()" title="Toggle ar5iv color scheme" style="padding: 0.6rem;margin-top: 0rem;">
+            <span class="color-scheme-icon" aria-label="Light mode"></span>
+          </a>
+      </div>
+  </div>
+    </header><header class="desktop_header">
+    <div style="display: flex; width: 60%;">
+
+        <div class="header-message" role="banner" style="padding-left: 15px; padding-top: 5px;">
+            This is <strong>Experimental HTML</strong>. We invite you to report rendering errors. <span class="sr-only">Use Alt+Y to toggle on accessible reporting links and Alt+Shift+Y to toggle off.</span> <a href="https://github.com/brucemiller/LaTeXML/wiki/Porting-LaTeX-packages-for-LaTeXML" target="_blank">View supported LaTeX packages</a> and <a href="https://github.com/brucemiller/LaTeXML/issues" target="_blank">help improve conversions</a>.
+        </div>
+    </div>
+        <div style="display: inline-flex; align-items: center;">
+            <a class="ar5iv-footer-button hover-effect" style="color: white;" href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#footer">Give Feedback</a>
+            <a class="ar5iv-footer-button hover-effect" target="_blank" style="color: white;" href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#myForm" onclick="event.preventDefault(); var modal = document.getElementById(&#39;myForm&#39;); modal.style.display = &#39;block&#39;; bugReportState.setInitiateWay(&#39;Header&#39;);">Open Issue</a>
+            <a class="ar5iv-footer-button hover-effect" style="color: white;" href="https://arxiv.org/abs/2308.05027v1">Back to Abstract</a>
+
+            <a class="ar5iv-toggle-color-scheme" href="javascript:toggleColorScheme()" title="Toggle ar5iv color scheme" style="float: right;">
+                <span class="color-scheme-icon"></span>
+            </a>
+        </div></header>
+
+<div class="ltx_page_main" id="main">
+<nav class="ltx_TOC active" aria-labelledby="toc_header"><h2 id="toc_header" class="sr-only">Table of Contents</h2>
+
+      <div id="listIcon" type="button" class="hide">
+          <svg width="17px" height="17px" viewBox="0 0 512 512" style="pointer-events: none;">
+          <path d="M40 48C26.7 48 16 58.7 16 72v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V72c0-13.3-10.7-24-24-24H40zM192 64c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zm0 160c-17.7 0-32 14.3-32 32s14.3 32 32 32H480c17.7 0 32-14.3 32-32s-14.3-32-32-32H192zM16 232v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V232c0-13.3-10.7-24-24-24H40c-13.3 0-24 10.7-24 24zM40 368c-13.3 0-24 10.7-24 24v48c0 13.3 10.7 24 24 24H88c13.3 0 24-10.7 24-24V392c0-13.3-10.7-24-24-24H40z"></path>
+          </svg>
+      </div>
+      <div id="arrowIcon" type="button">
+          <svg width="17px" height="17px" viewBox="0 0 448 512" style="pointer-events: none;">
+          <path d="M9.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.2 288 416 288c17.7 0 32-14.3 32-32s-14.3-32-32-32l-306.7 0L214.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"></path>
+          </svg>
+      </div><ol class="ltx_toclist">
+<li class="ltx_tocentry ltx_tocentry_section"><a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#S1" title="1 Introduction ‣ AbDiffuser: Full-Atom Generation of In-Vitro Functioning Antibodies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">1 </span>Introduction</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section">
+<a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#S2" title="2 Related Work ‣ AbDiffuser: Full-Atom Generation of In-Vitro Functioning Antibodies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">2 </span>Related Work</span></a>
+<ol class="ltx_toclist ltx_toclist_section">
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#S2.SS1" title="2.1 Protein Language Models ‣ 2 Related Work ‣ AbDiffuser: Full-Atom Generation of In-Vitro Functioning Antibodies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">2.1 </span>Protein Language Models</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#S2.SS2" title="2.2 Protein Structure Generation ‣ 2 Related Work ‣ AbDiffuser: Full-Atom Generation of In-Vitro Functioning Antibodies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">2.2 </span>Protein Structure Generation</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#S3" title="3 Denoising Diffusion for Protein Generation ‣ AbDiffuser: Full-Atom Generation of In-Vitro Functioning Antibodies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">3 </span>Denoising Diffusion for Protein Generation</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_section">
+<a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#S4" title="4 Aligned Protein Mixer ‣ AbDiffuser: Full-Atom Generation of In-Vitro Functioning Antibodies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">4 </span>Aligned Protein Mixer</span></a>
+<ol class="ltx_toclist ltx_toclist_section">
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#S4.SS1" title="4.1 SE(3) Equivariance by Frame Averaging ‣ 4 Aligned Protein Mixer ‣ AbDiffuser: Full-Atom Generation of In-Vitro Functioning Antibodies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">4.1 </span>SE(3) Equivariance by Frame Averaging</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#S4.SS2" title="4.2 Handling Length Changes by Multiple Sequence Alignment ‣ 4 Aligned Protein Mixer ‣ AbDiffuser: Full-Atom Generation of In-Vitro Functioning Antibodies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">4.2 </span>Handling Length Changes by Multiple Sequence Alignment</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#S4.SS3" title="4.3 The APMixer Architecture ‣ 4 Aligned Protein Mixer ‣ AbDiffuser: Full-Atom Generation of In-Vitro Functioning Antibodies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">4.3 </span>The APMixer Architecture</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#S4.SS4" title="4.4 Physics-informed Residue Representation by Projection ‣ 4 Aligned Protein Mixer ‣ AbDiffuser: Full-Atom Generation of In-Vitro Functioning Antibodies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">4.4 </span>Physics-informed Residue Representation by Projection</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_section">
+<a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#S5" title="5 Informative Diffusion Priors ‣ AbDiffuser: Full-Atom Generation of In-Vitro Functioning Antibodies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">5 </span>Informative Diffusion Priors</span></a>
+<ol class="ltx_toclist ltx_toclist_section">
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#S5.SS1" title="5.1 AHo-specific Residue Frequencies ‣ 5 Informative Diffusion Priors ‣ AbDiffuser: Full-Atom Generation of In-Vitro Functioning Antibodies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">5.1 </span>AHo-specific Residue Frequencies</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#S5.SS2" title="5.2 Encoding Conditional Atom Dependencies ‣ 5 Informative Diffusion Priors ‣ AbDiffuser: Full-Atom Generation of In-Vitro Functioning Antibodies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">5.2 </span>Encoding Conditional Atom Dependencies</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_section">
+<a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#S6" title="6 Experiments ‣ AbDiffuser: Full-Atom Generation of In-Vitro Functioning Antibodies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">6 </span>Experiments</span></a>
+<ol class="ltx_toclist ltx_toclist_section">
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#S6.SS1" title="6.1 Paired OAS Generation ‣ 6 Experiments ‣ AbDiffuser: Full-Atom Generation of In-Vitro Functioning Antibodies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">6.1 </span>Paired OAS Generation</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#S6.SS2" title="6.2 Generating HER2 Binders ‣ 6 Experiments ‣ AbDiffuser: Full-Atom Generation of In-Vitro Functioning Antibodies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">6.2 </span>Generating HER2 Binders</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#S6.SS3" title="6.3 In Vitro Validation ‣ 6 Experiments ‣ AbDiffuser: Full-Atom Generation of In-Vitro Functioning Antibodies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">6.3 </span>In Vitro Validation</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_section"><a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#S7" title="7 Conclusions ‣ AbDiffuser: Full-Atom Generation of In-Vitro Functioning Antibodies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">7 </span>Conclusions</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_appendix">
+<a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#A1" title="Appendix A Antibody Diffusion ‣ AbDiffuser: Full-Atom Generation of In-Vitro Functioning Antibodies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">A </span>Antibody Diffusion</span></a>
+<ol class="ltx_toclist ltx_toclist_appendix">
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#A1.SS1" title="A.1 Additional Background on Denoising Diffusion ‣ Appendix A Antibody Diffusion ‣ AbDiffuser: Full-Atom Generation of In-Vitro Functioning Antibodies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">A.1 </span>Additional Background on Denoising Diffusion</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#A1.SS2" title="A.2 Equivariant Diffusion of Atom Positions ‣ Appendix A Antibody Diffusion ‣ AbDiffuser: Full-Atom Generation of In-Vitro Functioning Antibodies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">A.2 </span>Equivariant Diffusion of Atom Positions</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#A1.SS3" title="A.3 Discrete Residue-type Diffusion ‣ Appendix A Antibody Diffusion ‣ AbDiffuser: Full-Atom Generation of In-Vitro Functioning Antibodies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">A.3 </span>Discrete Residue-type Diffusion</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_appendix"><a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#A2" title="Appendix B Re-weighted Optimization Objective for Atom Positions ‣ AbDiffuser: Full-Atom Generation of In-Vitro Functioning Antibodies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">B </span>Re-weighted Optimization Objective for Atom Positions</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_appendix"><a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#A3" title="Appendix C Reconstruction Loss for Atom Positions ‣ AbDiffuser: Full-Atom Generation of In-Vitro Functioning Antibodies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">C </span>Reconstruction Loss for Atom Positions</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_appendix">
+<a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#A4" title="Appendix D Simplified Discrete Diffusion Optimization Objective ‣ AbDiffuser: Full-Atom Generation of In-Vitro Functioning Antibodies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">D </span>Simplified Discrete Diffusion Optimization Objective</span></a>
+<ol class="ltx_toclist ltx_toclist_appendix">
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#A4.SS1" title="D.1 Non-Informative Priors Demand Higher Complexity Denoising Models ‣ Appendix D Simplified Discrete Diffusion Optimization Objective ‣ AbDiffuser: Full-Atom Generation of In-Vitro Functioning Antibodies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">D.1 </span>Non-Informative Priors Demand Higher Complexity Denoising Models</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_appendix"><a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#A5" title="Appendix E Learning the Conditional Dependence Relations Between Atoms ‣ AbDiffuser: Full-Atom Generation of In-Vitro Functioning Antibodies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">E </span>Learning the Conditional Dependence Relations Between Atoms</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_appendix"><a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#A6" title="Appendix F Proof of SE(3) universality ‣ AbDiffuser: Full-Atom Generation of In-Vitro Functioning Antibodies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">F </span>Proof of SE(3) universality</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_appendix"><a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#A7" title="Appendix G Noise Schedule ‣ AbDiffuser: Full-Atom Generation of In-Vitro Functioning Antibodies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">G </span>Noise Schedule</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_appendix"><a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#A8" title="Appendix H Metrics used in the numerical experiments ‣ AbDiffuser: Full-Atom Generation of In-Vitro Functioning Antibodies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">H </span>Metrics used in the numerical experiments</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_appendix"><a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#A9" title="Appendix I Detailed generated structure RMSD evaluation ‣ AbDiffuser: Full-Atom Generation of In-Vitro Functioning Antibodies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">I </span>Detailed generated structure RMSD evaluation</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_appendix"><a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#A10" title="Appendix J Wet-lab validation of designs ‣ AbDiffuser: Full-Atom Generation of In-Vitro Functioning Antibodies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">J </span>Wet-lab validation of designs</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_appendix">
+<a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#A11" title="Appendix K Implementation and Training Details ‣ AbDiffuser: Full-Atom Generation of In-Vitro Functioning Antibodies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">K </span>Implementation and Training Details</span></a>
+<ol class="ltx_toclist ltx_toclist_appendix">
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#A11.SS1" title="K.1 APMixer Details ‣ Appendix K Implementation and Training Details ‣ AbDiffuser: Full-Atom Generation of In-Vitro Functioning Antibodies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">K.1 </span>APMixer Details</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection">
+<a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#A11.SS2" title="K.2 Baselines ‣ Appendix K Implementation and Training Details ‣ AbDiffuser: Full-Atom Generation of In-Vitro Functioning Antibodies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">K.2 </span>Baselines</span></a>
+<ol class="ltx_toclist ltx_toclist_subsection">
+<li class="ltx_tocentry ltx_tocentry_subsubsection"><a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#A11.SS2.SSS1" title="K.2.1 Transformer ‣ K.2 Baselines ‣ Appendix K Implementation and Training Details ‣ AbDiffuser: Full-Atom Generation of In-Vitro Functioning Antibodies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">K.2.1 </span>Transformer</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsubsection"><a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#A11.SS2.SSS2" title="K.2.2 EGNN ‣ K.2 Baselines ‣ Appendix K Implementation and Training Details ‣ AbDiffuser: Full-Atom Generation of In-Vitro Functioning Antibodies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">K.2.2 </span>EGNN</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsubsection"><a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#A11.SS2.SSS3" title="K.2.3 FA GNN ‣ K.2 Baselines ‣ Appendix K Implementation and Training Details ‣ AbDiffuser: Full-Atom Generation of In-Vitro Functioning Antibodies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">K.2.3 </span>FA GNN</span></a></li>
+</ol>
+</li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#A11.SS3" title="K.3 Training ‣ Appendix K Implementation and Training Details ‣ AbDiffuser: Full-Atom Generation of In-Vitro Functioning Antibodies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">K.3 </span>Training</span></a></li>
+<li class="ltx_tocentry ltx_tocentry_subsection"><a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#A11.SS4" title="K.4 APMixer Classifier ‣ Appendix K Implementation and Training Details ‣ AbDiffuser: Full-Atom Generation of In-Vitro Functioning Antibodies" class="ltx_ref"><span class="ltx_text ltx_ref_title"><span class="ltx_tag ltx_tag_ref">K.4 </span>APMixer Classifier</span></a></li>
+</ol>
+</li>
+</ol></nav>
+
+<div class="ltx_page_content">
+<article class="ltx_document ltx_authors_1line">
+<div class="section" id="target-section">
+<div id="watermark-tr">arXiv:2308.05027v1 [q-bio.BM] 28 Jul 2023</div>
+<h1 class="ltx_title ltx_title_document">AbDiffuser: Full-Atom Generation of In-Vitro Functioning Antibodies</h1>
+</div>
+<button class="sr-only button" style="display: none;">Open issue for preceding element</button>
+<div class="ltx_authors">
+<span class="ltx_creator ltx_role_author">
+<span class="ltx_personname"><span id="id16.16.id1" class="ltx_text"></span><span id="id11.11.11" class="ltx_text">
+<span id="id11.11.11.11" class="ltx_tabular ltx_align_middle">
+<span id="id4.4.4.4.4" class="ltx_tr">
+<span id="id4.4.4.4.4.4" class="ltx_td ltx_align_left">Karolis Martinkus<math id="id1.1.1.1.1.1.m1.2" class="ltx_Math" alttext="{}^{1,3}" display="inline"><semantics id="id1.1.1.1.1.1.m1.2a"><msup id="id1.1.1.1.1.1.m1.2.2" xref="id1.1.1.1.1.1.m1.2.2.cmml"><mi id="id1.1.1.1.1.1.m1.2.2a" xref="id1.1.1.1.1.1.m1.2.2.cmml"></mi><mrow id="id1.1.1.1.1.1.m1.2.2.2.4" xref="id1.1.1.1.1.1.m1.2.2.2.3.cmml"><mn id="id1.1.1.1.1.1.m1.1.1.1.1" xref="id1.1.1.1.1.1.m1.1.1.1.1.cmml">1</mn><mo id="id1.1.1.1.1.1.m1.2.2.2.4.1" xref="id1.1.1.1.1.1.m1.2.2.2.3.cmml">,</mo><mn id="id1.1.1.1.1.1.m1.2.2.2.2" xref="id1.1.1.1.1.1.m1.2.2.2.2.cmml">3</mn></mrow></msup><annotation-xml encoding="MathML-Content" id="id1.1.1.1.1.1.m1.2b"><apply id="id1.1.1.1.1.1.m1.2.2.cmml" xref="id1.1.1.1.1.1.m1.2.2"><list id="id1.1.1.1.1.1.m1.2.2.2.3.cmml" xref="id1.1.1.1.1.1.m1.2.2.2.4"><cn type="integer" id="id1.1.1.1.1.1.m1.1.1.1.1.cmml" xref="id1.1.1.1.1.1.m1.1.1.1.1">1</cn><cn type="integer" id="id1.1.1.1.1.1.m1.2.2.2.2.cmml" xref="id1.1.1.1.1.1.m1.2.2.2.2">3</cn></list></apply></annotation-xml><annotation encoding="application/x-tex" id="id1.1.1.1.1.1.m1.2c">{}^{1,3}</annotation><annotation encoding="application/x-llamapun" id="id1.1.1.1.1.1.m1.2d">start_FLOATSUPERSCRIPT 1 , 3 end_FLOATSUPERSCRIPT</annotation></semantics></math>, Jan Ludwiczak<math id="id2.2.2.2.2.2.m2.1" class="ltx_Math" alttext="{}^{1}" display="inline"><semantics id="id2.2.2.2.2.2.m2.1a"><msup id="id2.2.2.2.2.2.m2.1.1" xref="id2.2.2.2.2.2.m2.1.1.cmml"><mi id="id2.2.2.2.2.2.m2.1.1a" xref="id2.2.2.2.2.2.m2.1.1.cmml"></mi><mn id="id2.2.2.2.2.2.m2.1.1.1" xref="id2.2.2.2.2.2.m2.1.1.1.cmml">1</mn></msup><annotation-xml encoding="MathML-Content" id="id2.2.2.2.2.2.m2.1b"><apply id="id2.2.2.2.2.2.m2.1.1.cmml" xref="id2.2.2.2.2.2.m2.1.1"><cn type="integer" id="id2.2.2.2.2.2.m2.1.1.1.cmml" xref="id2.2.2.2.2.2.m2.1.1.1">1</cn></apply></annotation-xml><annotation encoding="application/x-tex" id="id2.2.2.2.2.2.m2.1c">{}^{1}</annotation><annotation encoding="application/x-llamapun" id="id2.2.2.2.2.2.m2.1d">start_FLOATSUPERSCRIPT 1 end_FLOATSUPERSCRIPT</annotation></semantics></math>, Kyunghyun Cho<math id="id3.3.3.3.3.3.m3.2" class="ltx_Math" alttext="{}^{1,4}" display="inline"><semantics id="id3.3.3.3.3.3.m3.2a"><msup id="id3.3.3.3.3.3.m3.2.2" xref="id3.3.3.3.3.3.m3.2.2.cmml"><mi id="id3.3.3.3.3.3.m3.2.2a" xref="id3.3.3.3.3.3.m3.2.2.cmml"></mi><mrow id="id3.3.3.3.3.3.m3.2.2.2.4" xref="id3.3.3.3.3.3.m3.2.2.2.3.cmml"><mn id="id3.3.3.3.3.3.m3.1.1.1.1" xref="id3.3.3.3.3.3.m3.1.1.1.1.cmml">1</mn><mo id="id3.3.3.3.3.3.m3.2.2.2.4.1" xref="id3.3.3.3.3.3.m3.2.2.2.3.cmml">,</mo><mn id="id3.3.3.3.3.3.m3.2.2.2.2" xref="id3.3.3.3.3.3.m3.2.2.2.2.cmml">4</mn></mrow></msup><annotation-xml encoding="MathML-Content" id="id3.3.3.3.3.3.m3.2b"><apply id="id3.3.3.3.3.3.m3.2.2.cmml" xref="id3.3.3.3.3.3.m3.2.2"><list id="id3.3.3.3.3.3.m3.2.2.2.3.cmml" xref="id3.3.3.3.3.3.m3.2.2.2.4"><cn type="integer" id="id3.3.3.3.3.3.m3.1.1.1.1.cmml" xref="id3.3.3.3.3.3.m3.1.1.1.1">1</cn><cn type="integer" id="id3.3.3.3.3.3.m3.2.2.2.2.cmml" xref="id3.3.3.3.3.3.m3.2.2.2.2">4</cn></list></apply></annotation-xml><annotation encoding="application/x-tex" id="id3.3.3.3.3.3.m3.2c">{}^{1,4}</annotation><annotation encoding="application/x-llamapun" id="id3.3.3.3.3.3.m3.2d">start_FLOATSUPERSCRIPT 1 , 4 end_FLOATSUPERSCRIPT</annotation></semantics></math>, Wei-Ching Liang<math id="id4.4.4.4.4.4.m4.1" class="ltx_Math" alttext="{}^{2}" display="inline"><semantics id="id4.4.4.4.4.4.m4.1a"><msup id="id4.4.4.4.4.4.m4.1.1" xref="id4.4.4.4.4.4.m4.1.1.cmml"><mi id="id4.4.4.4.4.4.m4.1.1a" xref="id4.4.4.4.4.4.m4.1.1.cmml"></mi><mn id="id4.4.4.4.4.4.m4.1.1.1" xref="id4.4.4.4.4.4.m4.1.1.1.cmml">2</mn></msup><annotation-xml encoding="MathML-Content" id="id4.4.4.4.4.4.m4.1b"><apply id="id4.4.4.4.4.4.m4.1.1.cmml" xref="id4.4.4.4.4.4.m4.1.1"><cn type="integer" id="id4.4.4.4.4.4.m4.1.1.1.cmml" xref="id4.4.4.4.4.4.m4.1.1.1">2</cn></apply></annotation-xml><annotation encoding="application/x-tex" id="id4.4.4.4.4.4.m4.1c">{}^{2}</annotation><annotation encoding="application/x-llamapun" id="id4.4.4.4.4.4.m4.1d">start_FLOATSUPERSCRIPT 2 end_FLOATSUPERSCRIPT</annotation></semantics></math>,</span></span>
+<span id="id9.9.9.9.9" class="ltx_tr">
+<span id="id9.9.9.9.9.5" class="ltx_td ltx_align_left">Julien Lafrance-Vanasse<math id="id5.5.5.5.5.1.m1.1" class="ltx_Math" alttext="{}^{2}" display="inline"><semantics id="id5.5.5.5.5.1.m1.1a"><msup id="id5.5.5.5.5.1.m1.1.1" xref="id5.5.5.5.5.1.m1.1.1.cmml"><mi id="id5.5.5.5.5.1.m1.1.1a" xref="id5.5.5.5.5.1.m1.1.1.cmml"></mi><mn id="id5.5.5.5.5.1.m1.1.1.1" xref="id5.5.5.5.5.1.m1.1.1.1.cmml">2</mn></msup><annotation-xml encoding="MathML-Content" id="id5.5.5.5.5.1.m1.1b"><apply id="id5.5.5.5.5.1.m1.1.1.cmml" xref="id5.5.5.5.5.1.m1.1.1"><cn type="integer" id="id5.5.5.5.5.1.m1.1.1.1.cmml" xref="id5.5.5.5.5.1.m1.1.1.1">2</cn></apply></annotation-xml><annotation encoding="application/x-tex" id="id5.5.5.5.5.1.m1.1c">{}^{2}</annotation><annotation encoding="application/x-llamapun" id="id5.5.5.5.5.1.m1.1d">start_FLOATSUPERSCRIPT 2 end_FLOATSUPERSCRIPT</annotation></semantics></math>, Isidro Hotzel<math id="id6.6.6.6.6.2.m2.1" class="ltx_Math" alttext="{}^{2}" display="inline"><semantics id="id6.6.6.6.6.2.m2.1a"><msup id="id6.6.6.6.6.2.m2.1.1" xref="id6.6.6.6.6.2.m2.1.1.cmml"><mi id="id6.6.6.6.6.2.m2.1.1a" xref="id6.6.6.6.6.2.m2.1.1.cmml"></mi><mn id="id6.6.6.6.6.2.m2.1.1.1" xref="id6.6.6.6.6.2.m2.1.1.1.cmml">2</mn></msup><annotation-xml encoding="MathML-Content" id="id6.6.6.6.6.2.m2.1b"><apply id="id6.6.6.6.6.2.m2.1.1.cmml" xref="id6.6.6.6.6.2.m2.1.1"><cn type="integer" id="id6.6.6.6.6.2.m2.1.1.1.cmml" xref="id6.6.6.6.6.2.m2.1.1.1">2</cn></apply></annotation-xml><annotation encoding="application/x-tex" id="id6.6.6.6.6.2.m2.1c">{}^{2}</annotation><annotation encoding="application/x-llamapun" id="id6.6.6.6.6.2.m2.1d">start_FLOATSUPERSCRIPT 2 end_FLOATSUPERSCRIPT</annotation></semantics></math>, Arvind Rajpal<math id="id7.7.7.7.7.3.m3.1" class="ltx_Math" alttext="{}^{2}" display="inline"><semantics id="id7.7.7.7.7.3.m3.1a"><msup id="id7.7.7.7.7.3.m3.1.1" xref="id7.7.7.7.7.3.m3.1.1.cmml"><mi id="id7.7.7.7.7.3.m3.1.1a" xref="id7.7.7.7.7.3.m3.1.1.cmml"></mi><mn id="id7.7.7.7.7.3.m3.1.1.1" xref="id7.7.7.7.7.3.m3.1.1.1.cmml">2</mn></msup><annotation-xml encoding="MathML-Content" id="id7.7.7.7.7.3.m3.1b"><apply id="id7.7.7.7.7.3.m3.1.1.cmml" xref="id7.7.7.7.7.3.m3.1.1"><cn type="integer" id="id7.7.7.7.7.3.m3.1.1.1.cmml" xref="id7.7.7.7.7.3.m3.1.1.1">2</cn></apply></annotation-xml><annotation encoding="application/x-tex" id="id7.7.7.7.7.3.m3.1c">{}^{2}</annotation><annotation encoding="application/x-llamapun" id="id7.7.7.7.7.3.m3.1d">start_FLOATSUPERSCRIPT 2 end_FLOATSUPERSCRIPT</annotation></semantics></math>, Yan Wu<math id="id8.8.8.8.8.4.m4.1" class="ltx_Math" alttext="{}^{2}" display="inline"><semantics id="id8.8.8.8.8.4.m4.1a"><msup id="id8.8.8.8.8.4.m4.1.1" xref="id8.8.8.8.8.4.m4.1.1.cmml"><mi id="id8.8.8.8.8.4.m4.1.1a" xref="id8.8.8.8.8.4.m4.1.1.cmml"></mi><mn id="id8.8.8.8.8.4.m4.1.1.1" xref="id8.8.8.8.8.4.m4.1.1.1.cmml">2</mn></msup><annotation-xml encoding="MathML-Content" id="id8.8.8.8.8.4.m4.1b"><apply id="id8.8.8.8.8.4.m4.1.1.cmml" xref="id8.8.8.8.8.4.m4.1.1"><cn type="integer" id="id8.8.8.8.8.4.m4.1.1.1.cmml" xref="id8.8.8.8.8.4.m4.1.1.1">2</cn></apply></annotation-xml><annotation encoding="application/x-tex" id="id8.8.8.8.8.4.m4.1c">{}^{2}</annotation><annotation encoding="application/x-llamapun" id="id8.8.8.8.8.4.m4.1d">start_FLOATSUPERSCRIPT 2 end_FLOATSUPERSCRIPT</annotation></semantics></math>, Richard Bonneau<math id="id9.9.9.9.9.5.m5.1" class="ltx_Math" alttext="{}^{1}" display="inline"><semantics id="id9.9.9.9.9.5.m5.1a"><msup id="id9.9.9.9.9.5.m5.1.1" xref="id9.9.9.9.9.5.m5.1.1.cmml"><mi id="id9.9.9.9.9.5.m5.1.1a" xref="id9.9.9.9.9.5.m5.1.1.cmml"></mi><mn id="id9.9.9.9.9.5.m5.1.1.1" xref="id9.9.9.9.9.5.m5.1.1.1.cmml">1</mn></msup><annotation-xml encoding="MathML-Content" id="id9.9.9.9.9.5.m5.1b"><apply id="id9.9.9.9.9.5.m5.1.1.cmml" xref="id9.9.9.9.9.5.m5.1.1"><cn type="integer" id="id9.9.9.9.9.5.m5.1.1.1.cmml" xref="id9.9.9.9.9.5.m5.1.1.1">1</cn></apply></annotation-xml><annotation encoding="application/x-tex" id="id9.9.9.9.9.5.m5.1c">{}^{1}</annotation><annotation encoding="application/x-llamapun" id="id9.9.9.9.9.5.m5.1d">start_FLOATSUPERSCRIPT 1 end_FLOATSUPERSCRIPT</annotation></semantics></math>,</span></span>
+<span id="id11.11.11.11.11" class="ltx_tr">
+<span id="id11.11.11.11.11.2" class="ltx_td ltx_align_left">Vladimir Gligorijevic<math id="id10.10.10.10.10.1.m1.1" class="ltx_Math" alttext="{}^{1}" display="inline"><semantics id="id10.10.10.10.10.1.m1.1a"><msup id="id10.10.10.10.10.1.m1.1.1" xref="id10.10.10.10.10.1.m1.1.1.cmml"><mi id="id10.10.10.10.10.1.m1.1.1a" xref="id10.10.10.10.10.1.m1.1.1.cmml"></mi><mn id="id10.10.10.10.10.1.m1.1.1.1" xref="id10.10.10.10.10.1.m1.1.1.1.cmml">1</mn></msup><annotation-xml encoding="MathML-Content" id="id10.10.10.10.10.1.m1.1b"><apply id="id10.10.10.10.10.1.m1.1.1.cmml" xref="id10.10.10.10.10.1.m1.1.1"><cn type="integer" id="id10.10.10.10.10.1.m1.1.1.1.cmml" xref="id10.10.10.10.10.1.m1.1.1.1">1</cn></apply></annotation-xml><annotation encoding="application/x-tex" id="id10.10.10.10.10.1.m1.1c">{}^{1}</annotation><annotation encoding="application/x-llamapun" id="id10.10.10.10.10.1.m1.1d">start_FLOATSUPERSCRIPT 1 end_FLOATSUPERSCRIPT</annotation></semantics></math>, Andreas Loukas<math id="id11.11.11.11.11.2.m2.1" class="ltx_Math" alttext="{}^{1}" display="inline"><semantics id="id11.11.11.11.11.2.m2.1a"><msup id="id11.11.11.11.11.2.m2.1.1" xref="id11.11.11.11.11.2.m2.1.1.cmml"><mi id="id11.11.11.11.11.2.m2.1.1a" xref="id11.11.11.11.11.2.m2.1.1.cmml"></mi><mn id="id11.11.11.11.11.2.m2.1.1.1" xref="id11.11.11.11.11.2.m2.1.1.1.cmml">1</mn></msup><annotation-xml encoding="MathML-Content" id="id11.11.11.11.11.2.m2.1b"><apply id="id11.11.11.11.11.2.m2.1.1.cmml" xref="id11.11.11.11.11.2.m2.1.1"><cn type="integer" id="id11.11.11.11.11.2.m2.1.1.1.cmml" xref="id11.11.11.11.11.2.m2.1.1.1">1</cn></apply></annotation-xml><annotation encoding="application/x-tex" id="id11.11.11.11.11.2.m2.1c">{}^{1}</annotation><annotation encoding="application/x-llamapun" id="id11.11.11.11.11.2.m2.1d">start_FLOATSUPERSCRIPT 1 end_FLOATSUPERSCRIPT</annotation></semantics></math></span></span>
+</span></span><span id="id17.17.id2" class="ltx_text"></span>
+<br class="ltx_break"><span id="id18.18.id3" class="ltx_text"></span><span id="id15.15.15" class="ltx_text">
+<span id="id15.15.15.4" class="ltx_tabular ltx_align_middle">
+<span id="id13.13.13.2.2" class="ltx_tr">
+<span id="id13.13.13.2.2.2" class="ltx_td ltx_align_left"><math id="id12.12.12.1.1.1.m1.1" class="ltx_Math" alttext="{}^{1}" display="inline"><semantics id="id12.12.12.1.1.1.m1.1a"><msup id="id12.12.12.1.1.1.m1.1.1" xref="id12.12.12.1.1.1.m1.1.1.cmml"><mi id="id12.12.12.1.1.1.m1.1.1a" xref="id12.12.12.1.1.1.m1.1.1.cmml"></mi><mn id="id12.12.12.1.1.1.m1.1.1.1" xref="id12.12.12.1.1.1.m1.1.1.1.cmml">1</mn></msup><annotation-xml encoding="MathML-Content" id="id12.12.12.1.1.1.m1.1b"><apply id="id12.12.12.1.1.1.m1.1.1.cmml" xref="id12.12.12.1.1.1.m1.1.1"><cn type="integer" id="id12.12.12.1.1.1.m1.1.1.1.cmml" xref="id12.12.12.1.1.1.m1.1.1.1">1</cn></apply></annotation-xml><annotation encoding="application/x-tex" id="id12.12.12.1.1.1.m1.1c">{}^{1}</annotation><annotation encoding="application/x-llamapun" id="id12.12.12.1.1.1.m1.1d">start_FLOATSUPERSCRIPT 1 end_FLOATSUPERSCRIPT</annotation></semantics></math>Prescient Design, Genentech, Roche <math id="id13.13.13.2.2.2.m2.1" class="ltx_Math" alttext="{}^{2}" display="inline"><semantics id="id13.13.13.2.2.2.m2.1a"><msup id="id13.13.13.2.2.2.m2.1.1" xref="id13.13.13.2.2.2.m2.1.1.cmml"><mi id="id13.13.13.2.2.2.m2.1.1a" xref="id13.13.13.2.2.2.m2.1.1.cmml"></mi><mn id="id13.13.13.2.2.2.m2.1.1.1" xref="id13.13.13.2.2.2.m2.1.1.1.cmml">2</mn></msup><annotation-xml encoding="MathML-Content" id="id13.13.13.2.2.2.m2.1b"><apply id="id13.13.13.2.2.2.m2.1.1.cmml" xref="id13.13.13.2.2.2.m2.1.1"><cn type="integer" id="id13.13.13.2.2.2.m2.1.1.1.cmml" xref="id13.13.13.2.2.2.m2.1.1.1">2</cn></apply></annotation-xml><annotation encoding="application/x-tex" id="id13.13.13.2.2.2.m2.1c">{}^{2}</annotation><annotation encoding="application/x-llamapun" id="id13.13.13.2.2.2.m2.1d">start_FLOATSUPERSCRIPT 2 end_FLOATSUPERSCRIPT</annotation></semantics></math>Antibody Engineering, Genentech, Roche</span></span>
+<span id="id15.15.15.4.4" class="ltx_tr">
+<span id="id15.15.15.4.4.2" class="ltx_td ltx_align_left"><math id="id14.14.14.3.3.1.m1.1" class="ltx_Math" alttext="{}^{3}" display="inline"><semantics id="id14.14.14.3.3.1.m1.1a"><msup id="id14.14.14.3.3.1.m1.1.1" xref="id14.14.14.3.3.1.m1.1.1.cmml"><mi id="id14.14.14.3.3.1.m1.1.1a" xref="id14.14.14.3.3.1.m1.1.1.cmml"></mi><mn id="id14.14.14.3.3.1.m1.1.1.1" xref="id14.14.14.3.3.1.m1.1.1.1.cmml">3</mn></msup><annotation-xml encoding="MathML-Content" id="id14.14.14.3.3.1.m1.1b"><apply id="id14.14.14.3.3.1.m1.1.1.cmml" xref="id14.14.14.3.3.1.m1.1.1"><cn type="integer" id="id14.14.14.3.3.1.m1.1.1.1.cmml" xref="id14.14.14.3.3.1.m1.1.1.1">3</cn></apply></annotation-xml><annotation encoding="application/x-tex" id="id14.14.14.3.3.1.m1.1c">{}^{3}</annotation><annotation encoding="application/x-llamapun" id="id14.14.14.3.3.1.m1.1d">start_FLOATSUPERSCRIPT 3 end_FLOATSUPERSCRIPT</annotation></semantics></math>ETH Zurich <math id="id15.15.15.4.4.2.m2.1" class="ltx_Math" alttext="{}^{4}" display="inline"><semantics id="id15.15.15.4.4.2.m2.1a"><msup id="id15.15.15.4.4.2.m2.1.1" xref="id15.15.15.4.4.2.m2.1.1.cmml"><mi id="id15.15.15.4.4.2.m2.1.1a" xref="id15.15.15.4.4.2.m2.1.1.cmml"></mi><mn id="id15.15.15.4.4.2.m2.1.1.1" xref="id15.15.15.4.4.2.m2.1.1.1.cmml">4</mn></msup><annotation-xml encoding="MathML-Content" id="id15.15.15.4.4.2.m2.1b"><apply id="id15.15.15.4.4.2.m2.1.1.cmml" xref="id15.15.15.4.4.2.m2.1.1"><cn type="integer" id="id15.15.15.4.4.2.m2.1.1.1.cmml" xref="id15.15.15.4.4.2.m2.1.1.1">4</cn></apply></annotation-xml><annotation encoding="application/x-tex" id="id15.15.15.4.4.2.m2.1c">{}^{4}</annotation><annotation encoding="application/x-llamapun" id="id15.15.15.4.4.2.m2.1d">start_FLOATSUPERSCRIPT 4 end_FLOATSUPERSCRIPT</annotation></semantics></math>NYU</span></span>
+</span></span><span id="id19.19.id4" class="ltx_text"></span>
+</span></span>
+</div><button class="sr-only button" style="display: none;">Open issue for preceding element</button>
+
+<div class="ltx_abstract">
+<h6 class="ltx_title ltx_title_abstract">Abstract</h6><button class="sr-only button" style="display: none;">Open issue for preceding element</button>
+<p id="id20.id1" class="ltx_p">We introduce <span id="id20.id1.1" class="ltx_text ltx_font_italic">AbDiffuser</span>, an equivariant and physics-informed diffusion model for the joint generation of antibody 3D structures and sequences.
+AbDiffuser is built on top of a new representation of protein structure, relies on a novel architecture for aligned proteins, and utilizes strong diffusion priors to improve the denoising process.
+Our approach improves protein diffusion by taking advantage of domain knowledge and physics-based constraints; handles sequence-length changes; and reduces memory complexity by an order of magnitude enabling backbone and side chain generation. We validate AbDiffuser <span id="id20.id1.2" class="ltx_text ltx_font_italic">in silico</span> and <span id="id20.id1.3" class="ltx_text ltx_font_italic">in vitro</span>.
+Numerical experiments showcase the ability of AbDiffuser to generate antibodies that closely track the sequence and structural properties of a reference set.
+Laboratory experiments confirm that all 16 HER2 antibodies discovered were expressed at high levels and that 57.1% of selected designs were tight binders.</p><button class="sr-only button" style="display: none;">Open issue for preceding element</button>
+</div>
+<section id="S1" class="ltx_section">
+<h2 class="ltx_title ltx_title_section">
+<span class="ltx_tag ltx_tag_section">1 </span>Introduction</h2><button class="sr-only button" style="display: none;">Open issue for preceding element</button>
+<span id="footnotex1" class="ltx_note ltx_role_footnotetext"><sup class="ltx_note_mark">0</sup><span class="ltx_note_outer"><span class="ltx_note_content"><sup class="ltx_note_mark">0</sup><span class="ltx_note_type">footnotetext: </span>Correspondence to
+Andreas Loukas <math id="footnotex1.m1.1" class="ltx_Math" alttext="&lt;" display="inline"><semantics id="footnotex1.m1.1b"><mo id="footnotex1.m1.1.1" xref="footnotex1.m1.1.1.cmml">&lt;</mo><annotation-xml encoding="MathML-Content" id="footnotex1.m1.1c"><lt id="footnotex1.m1.1.1.cmml" xref="footnotex1.m1.1.1"></lt></annotation-xml><annotation encoding="application/x-tex" id="footnotex1.m1.1d">&lt;</annotation><annotation encoding="application/x-llamapun" id="footnotex1.m1.1e">&lt;</annotation></semantics></math><a href="mailto:andreas.loukas@roche.com" title="" class="ltx_ref ltx_href ltx_font_typewriter">andreas.loukas@roche.com</a><math id="footnotex1.m2.1" class="ltx_Math" alttext="&gt;" display="inline"><semantics id="footnotex1.m2.1b"><mo id="footnotex1.m2.1.1" xref="footnotex1.m2.1.1.cmml">&gt;</mo><annotation-xml encoding="MathML-Content" id="footnotex1.m2.1c"><gt id="footnotex1.m2.1.1.cmml" xref="footnotex1.m2.1.1"></gt></annotation-xml><annotation encoding="application/x-tex" id="footnotex1.m2.1d">&gt;</annotation><annotation encoding="application/x-llamapun" id="footnotex1.m2.1e">&gt;</annotation></semantics></math>.</span></span></span>
+<div id="S1.p1" class="ltx_para ltx_noindent">
+<p id="S1.p1.1" class="ltx_p">We focus on the generation of immunoglobulin proteins, also known as antibodies, that help the immune system recognize and neutralize pathogens. Due to their potency and versatility, antibodies constitute one of the most popular drug modalities, with 10 out of 37 newly FDA-approved drugs in 2022 being immunoglobulins <cite class="ltx_cite ltx_citemacro_citep">(Mullard, <a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#bib.bib55" title="" class="ltx_ref">2022</a>)</cite>. The ability to generate new antibodies with pre-defined biochemical properties <span id="S1.p1.1.1" class="ltx_text ltx_font_italic">in silico</span> carries the promise of expediting the process of drug design. </p><button class="sr-only button" style="display: none;">Open issue for preceding element</button>
+</div>
+<div id="S1.p2" class="ltx_para ltx_noindent">
+<p id="S1.p2.1" class="ltx_p">A number of works have attempted to generate antibodies by learning to form new sequences that resemble those found in nature&nbsp;<cite class="ltx_cite ltx_citemacro_citep">(Gligorijević et&nbsp;al., <a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#bib.bib20" title="" class="ltx_ref">2021</a>; Ferruz et&nbsp;al., <a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#bib.bib18" title="" class="ltx_ref">2022b</a>; Singer et&nbsp;al., <a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#bib.bib79" title="" class="ltx_ref">2022</a>)</cite>. An issue with sequence-based approaches is that it is hard to determine the properties that render a protein a functional molecule (and an antibody a potent drug) without inspecting a 3D model of the functional state such as an interface or active site.
+So far, nearly all of the first design methods that have enabled novel protein design employed carefully curated structure-function information to power nearly all scoring of designs <cite class="ltx_cite ltx_citemacro_citep">(Kuhlman et&nbsp;al., <a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#bib.bib42" title="" class="ltx_ref">2003</a>; Leman et&nbsp;al., <a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#bib.bib45" title="" class="ltx_ref">2020</a>; Huang et&nbsp;al., <a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#bib.bib29" title="" class="ltx_ref">2007</a>)</cite>.
+The determinant role of structure on function has motivated numerous works to co-design sequence and structure&nbsp;<cite class="ltx_cite ltx_citemacro_citep">(Anishchenko et&nbsp;al., <a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#bib.bib4" title="" class="ltx_ref">2021</a>; Harteveld et&nbsp;al., <a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#bib.bib23" title="" class="ltx_ref">2022</a>; Vinod et&nbsp;al., <a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#bib.bib86" title="" class="ltx_ref">2022</a>; Jin et&nbsp;al., <a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#bib.bib33" title="" class="ltx_ref">2022b</a>; Kong et&nbsp;al., <a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#bib.bib40" title="" class="ltx_ref">2023a</a>; Anand et&nbsp;al., <a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#bib.bib3" title="" class="ltx_ref">2022</a>; Lisanza et&nbsp;al., <a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#bib.bib48" title="" class="ltx_ref">2023</a>)</cite> or to first design the protein backbone and then fill in the amino acid identities&nbsp;<cite class="ltx_cite ltx_citemacro_citep">(Watson et&nbsp;al., <a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#bib.bib87" title="" class="ltx_ref">2022</a>; Ingraham et&nbsp;al., <a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#bib.bib31" title="" class="ltx_ref">2022</a>; Eguchi et&nbsp;al., <a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#bib.bib14" title="" class="ltx_ref">2022</a>; Trippe et&nbsp;al., <a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#bib.bib84" title="" class="ltx_ref">2022</a>; Lin &amp; AlQuraishi, <a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#bib.bib47" title="" class="ltx_ref">2023</a>; Wu et&nbsp;al., <a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#bib.bib90" title="" class="ltx_ref">2022</a>; Lee et&nbsp;al., <a href="https://browse.arxiv.org/latexml/2308.05027v1/2308.05027v1.html#bib.bib44" title="" class="ltx_ref">2023</a>)</cite>.</p><button class="sr-only button" style="display: none;">Open issue for preceding element</button>
+</div>
+      <h2>Section Title</h2>
+      <p>
+        This is a section of text content. It provides information and context
+        about the research and findings. The text should be readable and the
+        layout should adapt to various screen sizes to ensure a good user
+        experience on all devices.
+      </p>
+      <img src="x2.png" alt="Example Image" onclick="zoomImage(this.src)" />
+      <p>
+        Additional textual content here. The image above should be interactively
+        zoomable for mobile users to explore details without compromising the
+        readability of the text.
+      </p>
+      <p>Example of a Math equation: \( E = mc^2 \)</p>
+      <div class="equation-container">
+        <table id="S4.E1" class="ltx_equation ltx_eqn_table">
+          <tbody>
+            <tr class="ltx_equation ltx_eqn_row ltx_align_baseline">
+              <td class="ltx_eqn_cell ltx_eqn_center_padleft"></td>
+              <td class="ltx_eqn_cell ltx_align_center">
+                <math
+                  id="S4.E1.m1.5"
+                  class="ltx_Math"
+                  alttext="X^{\text{pos}}=\frac{1}{|\mathcal{F}(X^{\text{pos}})|}\sum_{(R,t)\in\mathcal{F%
+            }(X^{\text{pos}})}\phi(X^{\text{pos}}R-\bm{1}t,X^{\text{res}})R^{T}+\bm{1}t,"
+                  display="block"
+                  ><semantics id="S4.E1.m1.5a"
+                    ><mrow id="S4.E1.m1.5.5.1" xref="S4.E1.m1.5.5.1.1.cmml"
+                      ><mrow id="S4.E1.m1.5.5.1.1" xref="S4.E1.m1.5.5.1.1.cmml"
+                        ><msup
+                          id="S4.E1.m1.5.5.1.1.4"
+                          xref="S4.E1.m1.5.5.1.1.4.cmml"
+                          ><mi
+                            id="S4.E1.m1.5.5.1.1.4.2"
+                            xref="S4.E1.m1.5.5.1.1.4.2.cmml"
+                            >X</mi
+                          ><mtext
+                            id="S4.E1.m1.5.5.1.1.4.3"
+                            xref="S4.E1.m1.5.5.1.1.4.3a.cmml"
+                            >pos</mtext
+                          ></msup
+                        ><mo
+                          id="S4.E1.m1.5.5.1.1.3"
+                          xref="S4.E1.m1.5.5.1.1.3.cmml"
+                          >=</mo
+                        ><mrow
+                          id="S4.E1.m1.5.5.1.1.2"
+                          xref="S4.E1.m1.5.5.1.1.2.cmml"
+                          ><mrow
+                            id="S4.E1.m1.5.5.1.1.2.2"
+                            xref="S4.E1.m1.5.5.1.1.2.2.cmml"
+                            ><mfrac id="S4.E1.m1.1.1" xref="S4.E1.m1.1.1.cmml"
+                              ><mn
+                                id="S4.E1.m1.1.1.3"
+                                xref="S4.E1.m1.1.1.3.cmml"
+                                >1</mn
+                              ><mrow
+                                id="S4.E1.m1.1.1.1.1"
+                                xref="S4.E1.m1.1.1.1.2.cmml"
+                                ><mo
+                                  stretchy="false"
+                                  id="S4.E1.m1.1.1.1.1.2"
+                                  xref="S4.E1.m1.1.1.1.2.1.cmml"
+                                  >|</mo
+                                ><mrow
+                                  id="S4.E1.m1.1.1.1.1.1"
+                                  xref="S4.E1.m1.1.1.1.1.1.cmml"
+                                  ><mi
+                                    class="ltx_font_mathcaligraphic"
+                                    id="S4.E1.m1.1.1.1.1.1.3"
+                                    xref="S4.E1.m1.1.1.1.1.1.3.cmml"
+                                    >ℱ</mi
+                                  ><mo
+                                    id="S4.E1.m1.1.1.1.1.1.2"
+                                    xref="S4.E1.m1.1.1.1.1.1.2.cmml"
+                                    >⁢</mo
+                                  ><mrow
+                                    id="S4.E1.m1.1.1.1.1.1.1.1"
+                                    xref="S4.E1.m1.1.1.1.1.1.1.1.1.cmml"
+                                    ><mo
+                                      stretchy="false"
+                                      id="S4.E1.m1.1.1.1.1.1.1.1.2"
+                                      xref="S4.E1.m1.1.1.1.1.1.1.1.1.cmml"
+                                      >(</mo
+                                    ><msup
+                                      id="S4.E1.m1.1.1.1.1.1.1.1.1"
+                                      xref="S4.E1.m1.1.1.1.1.1.1.1.1.cmml"
+                                      ><mi
+                                        id="S4.E1.m1.1.1.1.1.1.1.1.1.2"
+                                        xref="S4.E1.m1.1.1.1.1.1.1.1.1.2.cmml"
+                                        >X</mi
+                                      ><mtext
+                                        id="S4.E1.m1.1.1.1.1.1.1.1.1.3"
+                                        xref="S4.E1.m1.1.1.1.1.1.1.1.1.3a.cmml"
+                                        >pos</mtext
+                                      ></msup
+                                    ><mo
+                                      stretchy="false"
+                                      id="S4.E1.m1.1.1.1.1.1.1.1.3"
+                                      xref="S4.E1.m1.1.1.1.1.1.1.1.1.cmml"
+                                      >)</mo
+                                    ></mrow
+                                  ></mrow
+                                ><mo
+                                  stretchy="false"
+                                  id="S4.E1.m1.1.1.1.1.3"
+                                  xref="S4.E1.m1.1.1.1.2.1.cmml"
+                                  >|</mo
+                                ></mrow
+                              ></mfrac
+                            ><mo
+                              id="S4.E1.m1.5.5.1.1.2.2.3"
+                              xref="S4.E1.m1.5.5.1.1.2.2.3.cmml"
+                              >⁢</mo
+                            ><mrow
+                              id="S4.E1.m1.5.5.1.1.2.2.2"
+                              xref="S4.E1.m1.5.5.1.1.2.2.2.cmml"
+                              ><munder
+                                id="S4.E1.m1.5.5.1.1.2.2.2.3"
+                                xref="S4.E1.m1.5.5.1.1.2.2.2.3.cmml"
+                                ><mo
+                                  movablelimits="false"
+                                  id="S4.E1.m1.5.5.1.1.2.2.2.3.2"
+                                  xref="S4.E1.m1.5.5.1.1.2.2.2.3.2.cmml"
+                                  >∑</mo
+                                ><mrow
+                                  id="S4.E1.m1.4.4.3"
+                                  xref="S4.E1.m1.4.4.3.cmml"
+                                  ><mrow
+                                    id="S4.E1.m1.4.4.3.5.2"
+                                    xref="S4.E1.m1.4.4.3.5.1.cmml"
+                                    ><mo
+                                      stretchy="false"
+                                      id="S4.E1.m1.4.4.3.5.2.1"
+                                      xref="S4.E1.m1.4.4.3.5.1.cmml"
+                                      >(</mo
+                                    ><mi
+                                      id="S4.E1.m1.2.2.1.1"
+                                      xref="S4.E1.m1.2.2.1.1.cmml"
+                                      >R</mi
+                                    ><mo
+                                      id="S4.E1.m1.4.4.3.5.2.2"
+                                      xref="S4.E1.m1.4.4.3.5.1.cmml"
+                                      >,</mo
+                                    ><mi
+                                      id="S4.E1.m1.3.3.2.2"
+                                      xref="S4.E1.m1.3.3.2.2.cmml"
+                                      >t</mi
+                                    ><mo
+                                      stretchy="false"
+                                      id="S4.E1.m1.4.4.3.5.2.3"
+                                      xref="S4.E1.m1.4.4.3.5.1.cmml"
+                                      >)</mo
+                                    ></mrow
+                                  ><mo
+                                    id="S4.E1.m1.4.4.3.4"
+                                    xref="S4.E1.m1.4.4.3.4.cmml"
+                                    >∈</mo
+                                  ><mrow
+                                    id="S4.E1.m1.4.4.3.3"
+                                    xref="S4.E1.m1.4.4.3.3.cmml"
+                                    ><mi
+                                      class="ltx_font_mathcaligraphic"
+                                      id="S4.E1.m1.4.4.3.3.3"
+                                      xref="S4.E1.m1.4.4.3.3.3.cmml"
+                                      >ℱ</mi
+                                    ><mo
+                                      id="S4.E1.m1.4.4.3.3.2"
+                                      xref="S4.E1.m1.4.4.3.3.2.cmml"
+                                      >⁢</mo
+                                    ><mrow
+                                      id="S4.E1.m1.4.4.3.3.1.1"
+                                      xref="S4.E1.m1.4.4.3.3.1.1.1.cmml"
+                                      ><mo
+                                        stretchy="false"
+                                        id="S4.E1.m1.4.4.3.3.1.1.2"
+                                        xref="S4.E1.m1.4.4.3.3.1.1.1.cmml"
+                                        >(</mo
+                                      ><msup
+                                        id="S4.E1.m1.4.4.3.3.1.1.1"
+                                        xref="S4.E1.m1.4.4.3.3.1.1.1.cmml"
+                                        ><mi
+                                          id="S4.E1.m1.4.4.3.3.1.1.1.2"
+                                          xref="S4.E1.m1.4.4.3.3.1.1.1.2.cmml"
+                                          >X</mi
+                                        ><mtext
+                                          id="S4.E1.m1.4.4.3.3.1.1.1.3"
+                                          xref="S4.E1.m1.4.4.3.3.1.1.1.3a.cmml"
+                                          >pos</mtext
+                                        ></msup
+                                      ><mo
+                                        stretchy="false"
+                                        id="S4.E1.m1.4.4.3.3.1.1.3"
+                                        xref="S4.E1.m1.4.4.3.3.1.1.1.cmml"
+                                        >)</mo
+                                      ></mrow
+                                    ></mrow
+                                  ></mrow
+                                ></munder
+                              ><mrow
+                                id="S4.E1.m1.5.5.1.1.2.2.2.2"
+                                xref="S4.E1.m1.5.5.1.1.2.2.2.2.cmml"
+                                ><mi
+                                  id="S4.E1.m1.5.5.1.1.2.2.2.2.4"
+                                  xref="S4.E1.m1.5.5.1.1.2.2.2.2.4.cmml"
+                                  >ϕ</mi
+                                ><mo
+                                  id="S4.E1.m1.5.5.1.1.2.2.2.2.3"
+                                  xref="S4.E1.m1.5.5.1.1.2.2.2.2.3.cmml"
+                                  >⁢</mo
+                                ><mrow
+                                  id="S4.E1.m1.5.5.1.1.2.2.2.2.2.2"
+                                  xref="S4.E1.m1.5.5.1.1.2.2.2.2.2.3.cmml"
+                                  ><mo
+                                    stretchy="false"
+                                    id="S4.E1.m1.5.5.1.1.2.2.2.2.2.2.3"
+                                    xref="S4.E1.m1.5.5.1.1.2.2.2.2.2.3.cmml"
+                                    >(</mo
+                                  ><mrow
+                                    id="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1"
+                                    xref="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.cmml"
+                                    ><mrow
+                                      id="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.2"
+                                      xref="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.2.cmml"
+                                      ><msup
+                                        id="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.2.2"
+                                        xref="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.2.2.cmml"
+                                        ><mi
+                                          id="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.2.2.2"
+                                          xref="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.2.2.2.cmml"
+                                          >X</mi
+                                        ><mtext
+                                          id="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.2.2.3"
+                                          xref="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.2.2.3a.cmml"
+                                          >pos</mtext
+                                        ></msup
+                                      ><mo
+                                        id="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.2.1"
+                                        xref="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.2.1.cmml"
+                                        >⁢</mo
+                                      ><mi
+                                        id="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.2.3"
+                                        xref="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.2.3.cmml"
+                                        >R</mi
+                                      ></mrow
+                                    ><mo
+                                      id="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.1"
+                                      xref="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.1.cmml"
+                                      >−</mo
+                                    ><mrow
+                                      id="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.3"
+                                      xref="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.3.cmml"
+                                      ><mn
+                                        id="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.3.2"
+                                        xref="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.3.2.cmml"
+                                        >𝟏</mn
+                                      ><mo
+                                        id="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.3.1"
+                                        xref="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.3.1.cmml"
+                                        >⁢</mo
+                                      ><mi
+                                        id="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.3.3"
+                                        xref="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.3.3.cmml"
+                                        >t</mi
+                                      ></mrow
+                                    ></mrow
+                                  ><mo
+                                    id="S4.E1.m1.5.5.1.1.2.2.2.2.2.2.4"
+                                    xref="S4.E1.m1.5.5.1.1.2.2.2.2.2.3.cmml"
+                                    >,</mo
+                                  ><msup
+                                    id="S4.E1.m1.5.5.1.1.2.2.2.2.2.2.2"
+                                    xref="S4.E1.m1.5.5.1.1.2.2.2.2.2.2.2.cmml"
+                                    ><mi
+                                      id="S4.E1.m1.5.5.1.1.2.2.2.2.2.2.2.2"
+                                      xref="S4.E1.m1.5.5.1.1.2.2.2.2.2.2.2.2.cmml"
+                                      >X</mi
+                                    ><mtext
+                                      id="S4.E1.m1.5.5.1.1.2.2.2.2.2.2.2.3"
+                                      xref="S4.E1.m1.5.5.1.1.2.2.2.2.2.2.2.3a.cmml"
+                                      >res</mtext
+                                    ></msup
+                                  ><mo
+                                    stretchy="false"
+                                    id="S4.E1.m1.5.5.1.1.2.2.2.2.2.2.5"
+                                    xref="S4.E1.m1.5.5.1.1.2.2.2.2.2.3.cmml"
+                                    >)</mo
+                                  ></mrow
+                                ><mo
+                                  id="S4.E1.m1.5.5.1.1.2.2.2.2.3a"
+                                  xref="S4.E1.m1.5.5.1.1.2.2.2.2.3.cmml"
+                                  >⁢</mo
+                                ><msup
+                                  id="S4.E1.m1.5.5.1.1.2.2.2.2.5"
+                                  xref="S4.E1.m1.5.5.1.1.2.2.2.2.5.cmml"
+                                  ><mi
+                                    id="S4.E1.m1.5.5.1.1.2.2.2.2.5.2"
+                                    xref="S4.E1.m1.5.5.1.1.2.2.2.2.5.2.cmml"
+                                    >R</mi
+                                  ><mi
+                                    id="S4.E1.m1.5.5.1.1.2.2.2.2.5.3"
+                                    xref="S4.E1.m1.5.5.1.1.2.2.2.2.5.3.cmml"
+                                    >T</mi
+                                  ></msup
+                                ></mrow
+                              ></mrow
+                            ></mrow
+                          ><mo
+                            id="S4.E1.m1.5.5.1.1.2.3"
+                            xref="S4.E1.m1.5.5.1.1.2.3.cmml"
+                            >+</mo
+                          ><mrow
+                            id="S4.E1.m1.5.5.1.1.2.4"
+                            xref="S4.E1.m1.5.5.1.1.2.4.cmml"
+                            ><mn
+                              id="S4.E1.m1.5.5.1.1.2.4.2"
+                              xref="S4.E1.m1.5.5.1.1.2.4.2.cmml"
+                              >𝟏</mn
+                            ><mo
+                              id="S4.E1.m1.5.5.1.1.2.4.1"
+                              xref="S4.E1.m1.5.5.1.1.2.4.1.cmml"
+                              >⁢</mo
+                            ><mi
+                              id="S4.E1.m1.5.5.1.1.2.4.3"
+                              xref="S4.E1.m1.5.5.1.1.2.4.3.cmml"
+                              >t</mi
+                            ></mrow
+                          ></mrow
+                        ></mrow
+                      ><mo id="S4.E1.m1.5.5.1.2" xref="S4.E1.m1.5.5.1.1.cmml"
+                        >,</mo
+                      ></mrow
+                    ><annotation-xml encoding="MathML-Content" id="S4.E1.m1.5b"
+                      ><apply id="S4.E1.m1.5.5.1.1.cmml" xref="S4.E1.m1.5.5.1"
+                        ><eq
+                          id="S4.E1.m1.5.5.1.1.3.cmml"
+                          xref="S4.E1.m1.5.5.1.1.3"
+                        ></eq
+                        ><apply
+                          id="S4.E1.m1.5.5.1.1.4.cmml"
+                          xref="S4.E1.m1.5.5.1.1.4"
+                          ><csymbol
+                            cd="ambiguous"
+                            id="S4.E1.m1.5.5.1.1.4.1.cmml"
+                            xref="S4.E1.m1.5.5.1.1.4"
+                            >superscript</csymbol
+                          ><ci
+                            id="S4.E1.m1.5.5.1.1.4.2.cmml"
+                            xref="S4.E1.m1.5.5.1.1.4.2"
+                            >𝑋</ci
+                          ><ci
+                            id="S4.E1.m1.5.5.1.1.4.3a.cmml"
+                            xref="S4.E1.m1.5.5.1.1.4.3"
+                            ><mtext
+                              mathsize="70%"
+                              id="S4.E1.m1.5.5.1.1.4.3.cmml"
+                              xref="S4.E1.m1.5.5.1.1.4.3"
+                              >pos</mtext
+                            ></ci
+                          ></apply
+                        ><apply
+                          id="S4.E1.m1.5.5.1.1.2.cmml"
+                          xref="S4.E1.m1.5.5.1.1.2"
+                          ><plus
+                            id="S4.E1.m1.5.5.1.1.2.3.cmml"
+                            xref="S4.E1.m1.5.5.1.1.2.3"
+                          ></plus
+                          ><apply
+                            id="S4.E1.m1.5.5.1.1.2.2.cmml"
+                            xref="S4.E1.m1.5.5.1.1.2.2"
+                            ><times
+                              id="S4.E1.m1.5.5.1.1.2.2.3.cmml"
+                              xref="S4.E1.m1.5.5.1.1.2.2.3"
+                            ></times
+                            ><apply id="S4.E1.m1.1.1.cmml" xref="S4.E1.m1.1.1"
+                              ><divide
+                                id="S4.E1.m1.1.1.2.cmml"
+                                xref="S4.E1.m1.1.1"
+                              ></divide
+                              ><cn
+                                type="integer"
+                                id="S4.E1.m1.1.1.3.cmml"
+                                xref="S4.E1.m1.1.1.3"
+                                >1</cn
+                              ><apply
+                                id="S4.E1.m1.1.1.1.2.cmml"
+                                xref="S4.E1.m1.1.1.1.1"
+                                ><abs
+                                  id="S4.E1.m1.1.1.1.2.1.cmml"
+                                  xref="S4.E1.m1.1.1.1.1.2"
+                                ></abs
+                                ><apply
+                                  id="S4.E1.m1.1.1.1.1.1.cmml"
+                                  xref="S4.E1.m1.1.1.1.1.1"
+                                  ><times
+                                    id="S4.E1.m1.1.1.1.1.1.2.cmml"
+                                    xref="S4.E1.m1.1.1.1.1.1.2"
+                                  ></times
+                                  ><ci
+                                    id="S4.E1.m1.1.1.1.1.1.3.cmml"
+                                    xref="S4.E1.m1.1.1.1.1.1.3"
+                                    >ℱ</ci
+                                  ><apply
+                                    id="S4.E1.m1.1.1.1.1.1.1.1.1.cmml"
+                                    xref="S4.E1.m1.1.1.1.1.1.1.1"
+                                    ><csymbol
+                                      cd="ambiguous"
+                                      id="S4.E1.m1.1.1.1.1.1.1.1.1.1.cmml"
+                                      xref="S4.E1.m1.1.1.1.1.1.1.1"
+                                      >superscript</csymbol
+                                    ><ci
+                                      id="S4.E1.m1.1.1.1.1.1.1.1.1.2.cmml"
+                                      xref="S4.E1.m1.1.1.1.1.1.1.1.1.2"
+                                      >𝑋</ci
+                                    ><ci
+                                      id="S4.E1.m1.1.1.1.1.1.1.1.1.3a.cmml"
+                                      xref="S4.E1.m1.1.1.1.1.1.1.1.1.3"
+                                      ><mtext
+                                        mathsize="70%"
+                                        id="S4.E1.m1.1.1.1.1.1.1.1.1.3.cmml"
+                                        xref="S4.E1.m1.1.1.1.1.1.1.1.1.3"
+                                        >pos</mtext
+                                      ></ci
+                                    ></apply
+                                  ></apply
+                                ></apply
+                              ></apply
+                            ><apply
+                              id="S4.E1.m1.5.5.1.1.2.2.2.cmml"
+                              xref="S4.E1.m1.5.5.1.1.2.2.2"
+                              ><apply
+                                id="S4.E1.m1.5.5.1.1.2.2.2.3.cmml"
+                                xref="S4.E1.m1.5.5.1.1.2.2.2.3"
+                                ><csymbol
+                                  cd="ambiguous"
+                                  id="S4.E1.m1.5.5.1.1.2.2.2.3.1.cmml"
+                                  xref="S4.E1.m1.5.5.1.1.2.2.2.3"
+                                  >subscript</csymbol
+                                ><sum
+                                  id="S4.E1.m1.5.5.1.1.2.2.2.3.2.cmml"
+                                  xref="S4.E1.m1.5.5.1.1.2.2.2.3.2"
+                                ></sum
+                                ><apply
+                                  id="S4.E1.m1.4.4.3.cmml"
+                                  xref="S4.E1.m1.4.4.3"
+                                  ><in
+                                    id="S4.E1.m1.4.4.3.4.cmml"
+                                    xref="S4.E1.m1.4.4.3.4"
+                                  ></in
+                                  ><interval
+                                    closure="open"
+                                    id="S4.E1.m1.4.4.3.5.1.cmml"
+                                    xref="S4.E1.m1.4.4.3.5.2"
+                                    ><ci
+                                      id="S4.E1.m1.2.2.1.1.cmml"
+                                      xref="S4.E1.m1.2.2.1.1"
+                                      >𝑅</ci
+                                    ><ci
+                                      id="S4.E1.m1.3.3.2.2.cmml"
+                                      xref="S4.E1.m1.3.3.2.2"
+                                      >𝑡</ci
+                                    ></interval
+                                  ><apply
+                                    id="S4.E1.m1.4.4.3.3.cmml"
+                                    xref="S4.E1.m1.4.4.3.3"
+                                    ><times
+                                      id="S4.E1.m1.4.4.3.3.2.cmml"
+                                      xref="S4.E1.m1.4.4.3.3.2"
+                                    ></times
+                                    ><ci
+                                      id="S4.E1.m1.4.4.3.3.3.cmml"
+                                      xref="S4.E1.m1.4.4.3.3.3"
+                                      >ℱ</ci
+                                    ><apply
+                                      id="S4.E1.m1.4.4.3.3.1.1.1.cmml"
+                                      xref="S4.E1.m1.4.4.3.3.1.1"
+                                      ><csymbol
+                                        cd="ambiguous"
+                                        id="S4.E1.m1.4.4.3.3.1.1.1.1.cmml"
+                                        xref="S4.E1.m1.4.4.3.3.1.1"
+                                        >superscript</csymbol
+                                      ><ci
+                                        id="S4.E1.m1.4.4.3.3.1.1.1.2.cmml"
+                                        xref="S4.E1.m1.4.4.3.3.1.1.1.2"
+                                        >𝑋</ci
+                                      ><ci
+                                        id="S4.E1.m1.4.4.3.3.1.1.1.3a.cmml"
+                                        xref="S4.E1.m1.4.4.3.3.1.1.1.3"
+                                        ><mtext
+                                          mathsize="50%"
+                                          id="S4.E1.m1.4.4.3.3.1.1.1.3.cmml"
+                                          xref="S4.E1.m1.4.4.3.3.1.1.1.3"
+                                          >pos</mtext
+                                        ></ci
+                                      ></apply
+                                    ></apply
+                                  ></apply
+                                ></apply
+                              ><apply
+                                id="S4.E1.m1.5.5.1.1.2.2.2.2.cmml"
+                                xref="S4.E1.m1.5.5.1.1.2.2.2.2"
+                                ><times
+                                  id="S4.E1.m1.5.5.1.1.2.2.2.2.3.cmml"
+                                  xref="S4.E1.m1.5.5.1.1.2.2.2.2.3"
+                                ></times
+                                ><ci
+                                  id="S4.E1.m1.5.5.1.1.2.2.2.2.4.cmml"
+                                  xref="S4.E1.m1.5.5.1.1.2.2.2.2.4"
+                                  >italic-ϕ</ci
+                                ><interval
+                                  closure="open"
+                                  id="S4.E1.m1.5.5.1.1.2.2.2.2.2.3.cmml"
+                                  xref="S4.E1.m1.5.5.1.1.2.2.2.2.2.2"
+                                  ><apply
+                                    id="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.cmml"
+                                    xref="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1"
+                                    ><minus
+                                      id="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.1.cmml"
+                                      xref="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.1"
+                                    ></minus
+                                    ><apply
+                                      id="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.2.cmml"
+                                      xref="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.2"
+                                      ><times
+                                        id="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.2.1.cmml"
+                                        xref="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.2.1"
+                                      ></times
+                                      ><apply
+                                        id="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.2.2.cmml"
+                                        xref="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.2.2"
+                                        ><csymbol
+                                          cd="ambiguous"
+                                          id="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.2.2.1.cmml"
+                                          xref="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.2.2"
+                                          >superscript</csymbol
+                                        ><ci
+                                          id="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.2.2.2.cmml"
+                                          xref="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.2.2.2"
+                                          >𝑋</ci
+                                        ><ci
+                                          id="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.2.2.3a.cmml"
+                                          xref="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.2.2.3"
+                                          ><mtext
+                                            mathsize="70%"
+                                            id="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.2.2.3.cmml"
+                                            xref="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.2.2.3"
+                                            >pos</mtext
+                                          ></ci
+                                        ></apply
+                                      ><ci
+                                        id="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.2.3.cmml"
+                                        xref="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.2.3"
+                                        >𝑅</ci
+                                      ></apply
+                                    ><apply
+                                      id="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.3.cmml"
+                                      xref="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.3"
+                                      ><times
+                                        id="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.3.1.cmml"
+                                        xref="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.3.1"
+                                      ></times
+                                      ><cn
+                                        type="integer"
+                                        id="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.3.2.cmml"
+                                        xref="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.3.2"
+                                        >1</cn
+                                      ><ci
+                                        id="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.3.3.cmml"
+                                        xref="S4.E1.m1.5.5.1.1.1.1.1.1.1.1.1.3.3"
+                                        >𝑡</ci
+                                      ></apply
+                                    ></apply
+                                  ><apply
+                                    id="S4.E1.m1.5.5.1.1.2.2.2.2.2.2.2.cmml"
+                                    xref="S4.E1.m1.5.5.1.1.2.2.2.2.2.2.2"
+                                    ><csymbol
+                                      cd="ambiguous"
+                                      id="S4.E1.m1.5.5.1.1.2.2.2.2.2.2.2.1.cmml"
+                                      xref="S4.E1.m1.5.5.1.1.2.2.2.2.2.2.2"
+                                      >superscript</csymbol
+                                    ><ci
+                                      id="S4.E1.m1.5.5.1.1.2.2.2.2.2.2.2.2.cmml"
+                                      xref="S4.E1.m1.5.5.1.1.2.2.2.2.2.2.2.2"
+                                      >𝑋</ci
+                                    ><ci
+                                      id="S4.E1.m1.5.5.1.1.2.2.2.2.2.2.2.3a.cmml"
+                                      xref="S4.E1.m1.5.5.1.1.2.2.2.2.2.2.2.3"
+                                      ><mtext
+                                        mathsize="70%"
+                                        id="S4.E1.m1.5.5.1.1.2.2.2.2.2.2.2.3.cmml"
+                                        xref="S4.E1.m1.5.5.1.1.2.2.2.2.2.2.2.3"
+                                        >res</mtext
+                                      ></ci
+                                    ></apply
+                                  ></interval
+                                ><apply
+                                  id="S4.E1.m1.5.5.1.1.2.2.2.2.5.cmml"
+                                  xref="S4.E1.m1.5.5.1.1.2.2.2.2.5"
+                                  ><csymbol
+                                    cd="ambiguous"
+                                    id="S4.E1.m1.5.5.1.1.2.2.2.2.5.1.cmml"
+                                    xref="S4.E1.m1.5.5.1.1.2.2.2.2.5"
+                                    >superscript</csymbol
+                                  ><ci
+                                    id="S4.E1.m1.5.5.1.1.2.2.2.2.5.2.cmml"
+                                    xref="S4.E1.m1.5.5.1.1.2.2.2.2.5.2"
+                                    >𝑅</ci
+                                  ><ci
+                                    id="S4.E1.m1.5.5.1.1.2.2.2.2.5.3.cmml"
+                                    xref="S4.E1.m1.5.5.1.1.2.2.2.2.5.3"
+                                    >𝑇</ci
+                                  ></apply
+                                ></apply
+                              ></apply
+                            ></apply
+                          ><apply
+                            id="S4.E1.m1.5.5.1.1.2.4.cmml"
+                            xref="S4.E1.m1.5.5.1.1.2.4"
+                            ><times
+                              id="S4.E1.m1.5.5.1.1.2.4.1.cmml"
+                              xref="S4.E1.m1.5.5.1.1.2.4.1"
+                            ></times
+                            ><cn
+                              type="integer"
+                              id="S4.E1.m1.5.5.1.1.2.4.2.cmml"
+                              xref="S4.E1.m1.5.5.1.1.2.4.2"
+                              >1</cn
+                            ><ci
+                              id="S4.E1.m1.5.5.1.1.2.4.3.cmml"
+                              xref="S4.E1.m1.5.5.1.1.2.4.3"
+                              >𝑡</ci
+                            ></apply
+                          ></apply
+                        ></apply
+                      ></annotation-xml
+                    ><annotation encoding="application/x-tex" id="S4.E1.m1.5c"
+                      >X^{\text{pos}}=\frac{1}{|\mathcal{F}(X^{\text{pos}})|}\sum_{(R,t)\in\mathcal{F%
+                      }(X^{\text{pos}})}\phi(X^{\text{pos}}R-\bm{1}t,X^{\text{res}})R^{T}+\bm{1}t,</annotation
+                    ><annotation
+                      encoding="application/x-llamapun"
+                      id="S4.E1.m1.5d"
+                      >italic_X start_POSTSUPERSCRIPT pos end_POSTSUPERSCRIPT =
+                      divide start_ARG 1 end_ARG start_ARG | caligraphic_F (
+                      italic_X start_POSTSUPERSCRIPT pos end_POSTSUPERSCRIPT ) |
+                      end_ARG ∑ start_POSTSUBSCRIPT ( italic_R , italic_t ) ∈
+                      caligraphic_F ( italic_X start_POSTSUPERSCRIPT pos
+                      end_POSTSUPERSCRIPT ) end_POSTSUBSCRIPT italic_ϕ (
+                      italic_X start_POSTSUPERSCRIPT pos end_POSTSUPERSCRIPT
+                      italic_R - bold_1 italic_t , italic_X
+                      start_POSTSUPERSCRIPT res end_POSTSUPERSCRIPT ) italic_R
+                      start_POSTSUPERSCRIPT italic_T end_POSTSUPERSCRIPT +
+                      bold_1 italic_t ,</annotation
+                    ></semantics
+                  ></math
+                >
+              </td>
+              <td class="ltx_eqn_cell ltx_eqn_center_padright"></td>
+              <td
+                rowspan="1"
+                class="ltx_eqn_cell ltx_eqn_eqno ltx_align_middle ltx_align_right"
+              >
+                <span class="ltx_tag ltx_tag_equation ltx_align_right"
+                  >(1)</span
+                >
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="zoomed" onclick="unzoomImage()" id="zoomed">
+      <img src="" alt="Zoomed Image" id="zoomedImage" />
+    </div>
+    
+
+    <script>
+      function zoomImage(src) {
+        document.getElementById("zoomedImage").src = src;
+        document.getElementById("zoomed").style.display = "flex";
+      }
+      function unzoomImage() {
+        document.getElementById("zoomed").style.display = "none";
+      }
+    </script>
+  </body>
+</html>
